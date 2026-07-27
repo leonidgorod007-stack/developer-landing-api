@@ -116,8 +116,9 @@ Secrets are never hard-coded; `.env` is git-ignored.
   triage (sentiment + classification + a short draft reply) is a lightweight
   task where Haiku is the right engineering trade-off for latency and cost on a
   public contact form. It's a single env var (`AI_MODEL`) to change.
-- **Feature:** Anthropic **structured outputs** (JSON-schema-constrained
-  response) so the model output is always schema-valid.
+- **Feature:** Claude **tool use** with a forced `tool_choice` — the model must
+  call a `record_triage` tool whose input schema *is* the analysis contract, so
+  the result is a schema-shaped object (no brittle free-text JSON parsing).
 
 **Why FastAPI over Flask/Django?** For an API-first service, FastAPI gives the
 most value with the least code: async I/O (the request does AI + two emails +
@@ -331,9 +332,12 @@ The owner's notification email includes this triage; the response returns it to
 the frontend, which renders it inline.
 
 **Provider/model:** Anthropic Claude (`claude-haiku-4-5`) via the async
-`anthropic` SDK, using **structured outputs** (a JSON schema passed as
-`output_config.format`) so the model's response is guaranteed schema-valid — no
-brittle free-text parsing.
+`anthropic` SDK, using **tool use** with a forced `tool_choice`: the model must
+call a single `record_triage` tool whose `input_schema` is the analysis
+contract, so its `input` comes back as an already-parsed, schema-shaped object.
+This gives structured output without depending on the newest SDK's
+`output_config` feature (which the pinned SDK version does not expose) and works
+across all Claude models — no brittle free-text JSON parsing.
 
 ### Graceful fallback (reliability)
 
@@ -361,9 +365,10 @@ handle both paths identically. `GET /api/health` reports which path is active.
 
 **User message:** the sanitised `name`, `email`, `phone`, and `comment`.
 
-**Output schema (enforced):** `sentiment` ∈ {positive, neutral, negative},
-`category` ∈ {support, sales, hiring, feedback, spam, other}, `priority` ∈
-{low, medium, high}, plus `summary` and `suggested_reply` strings. See
+**Tool schema (enforced via `tool_choice`):** the `record_triage` tool requires
+`sentiment` ∈ {positive, neutral, negative}, `category` ∈ {support, sales,
+hiring, feedback, spam, other}, `priority` ∈ {low, medium, high}, plus `summary`
+and `suggested_reply` strings. See
 [`app/services/ai_service.py`](app/services/ai_service.py).
 
 ---
@@ -380,10 +385,13 @@ This project was built with **Claude (Claude Code)** as a pair-programmer.
 - Draft docstrings and this README.
 
 **Reviewed and fixed by hand:**
-- **AI SDK correctness** — confirmed the current Anthropic model IDs and the
-  `output_config.format` structured-outputs shape against the official SDK
-  reference (the model landscape moves fast; guessing here is a common source
-  of bugs).
+- **AI SDK correctness** — the first draft used the newest `output_config`
+  structured-outputs API; on verification the pinned SDK version didn't expose
+  it, so I reworked the call to use **tool use with a forced `tool_choice`**,
+  which yields the same schema-shaped result across SDK/model versions.
+- **A real config bug** — introducing an actual `.env` exposed that
+  `pydantic-settings` JSON-decodes list fields before validators run; fixed the
+  comma-separated `CORS_ORIGINS` parsing with `NoDecode`.
 - **Concurrency correctness** — moved all blocking file I/O (`RateLimiter`,
   repositories) off the event loop via `asyncio.to_thread` under an
   `asyncio.Lock`, and made metrics/rate-limit writes atomic (temp-file +

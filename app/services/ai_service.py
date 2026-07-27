@@ -8,16 +8,16 @@ In a single call it produces a structured analysis:
   • summary        (one sentence)
   • suggested_reply (a draft the owner can send back)
 
-Reliability is the priority: the call is bounded by a timeout, uses the
-Anthropic structured-outputs feature so the JSON is schema-valid, and — if the
-API key is missing, the request times out, or anything else goes wrong —
-degrades to a deterministic rule-based fallback so the endpoint never fails
-because of the AI step.
+Reliability is the priority: the call is bounded by a timeout and uses Claude
+*tool use* with a forced `tool_choice` — the model must call our `record_triage`
+tool, so its `input` comes back as a schema-shaped object (no brittle free-text
+JSON parsing). If the API key is missing, the request times out, or anything
+else goes wrong, the service degrades to a deterministic rule-based fallback so
+the endpoint never fails because of the AI step.
 """
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 
 from app.config import Settings
@@ -31,19 +31,41 @@ from app.models.schemas import (
 
 logger = logging.getLogger("app.ai")
 
-# JSON schema the model must fill. Structured outputs guarantee the response
-# validates against this, so we never have to defensively parse free text.
-_OUTPUT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "sentiment": {"type": "string", "enum": [s.value for s in Sentiment]},
-        "category": {"type": "string", "enum": [c.value for c in RequestCategory]},
-        "priority": {"type": "string", "enum": [p.value for p in Priority]},
-        "summary": {"type": "string"},
-        "suggested_reply": {"type": "string"},
+# A single tool whose input schema *is* our analysis contract. Forcing the model
+# to call it (tool_choice) yields a parsed, schema-shaped `input` object — the
+# structured-output pattern that works across all Claude models and SDK versions.
+_TRIAGE_TOOL = {
+    "name": "record_triage",
+    "description": "Record the triage analysis of an inbound contact message.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "sentiment": {
+                "type": "string",
+                "enum": [s.value for s in Sentiment],
+                "description": "Overall emotional tone of the message.",
+            },
+            "category": {
+                "type": "string",
+                "enum": [c.value for c in RequestCategory],
+                "description": "The kind of request this message represents.",
+            },
+            "priority": {
+                "type": "string",
+                "enum": [p.value for p in Priority],
+                "description": "How urgently the owner should respond.",
+            },
+            "summary": {
+                "type": "string",
+                "description": "One-sentence summary of the message.",
+            },
+            "suggested_reply": {
+                "type": "string",
+                "description": "A short, warm, professional draft reply to the sender.",
+            },
+        },
+        "required": ["sentiment", "category", "priority", "summary", "suggested_reply"],
     },
-    "required": ["sentiment", "category", "priority", "summary", "suggested_reply"],
-    "additionalProperties": False,
 }
 
 _SYSTEM_PROMPT = (
@@ -104,14 +126,14 @@ class AIService:
             model=self._settings.ai_model,
             max_tokens=1024,
             system=_SYSTEM_PROMPT,
+            tools=[_TRIAGE_TOOL],
+            tool_choice={"type": "tool", "name": _TRIAGE_TOOL["name"]},
             messages=[{"role": "user", "content": user_content}],
-            output_config={
-                "format": {"type": "json_schema", "schema": _OUTPUT_SCHEMA}
-            },
         )
-        # Structured outputs guarantee the first text block is schema-valid JSON.
-        text = next(b.text for b in response.content if b.type == "text")
-        data = json.loads(text)
+        # Forcing the tool guarantees a tool_use block whose `input` is already a
+        # dict shaped like our schema — no free-text JSON parsing required.
+        tool_use = next(b for b in response.content if b.type == "tool_use")
+        data = tool_use.input
         logger.info(
             "AI analysis ok: sentiment=%s category=%s priority=%s",
             data["sentiment"], data["category"], data["priority"],

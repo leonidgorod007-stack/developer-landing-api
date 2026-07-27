@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 # Project root = one directory above /app. Relative paths in .env are resolved
 # against this so the service behaves the same regardless of CWD.
@@ -33,7 +34,9 @@ class Settings(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
 
-    cors_origins: list[str] = Field(
+    # NoDecode stops pydantic-settings from JSON-parsing the raw env value, so a
+    # plain comma-separated string reaches the `_split_cors` validator below.
+    cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:8000"]
     )
 
