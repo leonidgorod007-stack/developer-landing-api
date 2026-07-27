@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alex Rivera — Backend Developer</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-2: #1c2330;
+      --border: #2a3240;
+      --text: #e6edf3;
+      --muted: #8b98a9;
+      --accent: #58e6b0;
+      --accent-2: #6ea8fe;
+      --danger: #ff7b72;
+      --radius: 14px;
+      --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: radial-gradient(1200px 600px at 80% -10%, #16324a30, transparent),
+                  radial-gradient(900px 500px at -10% 20%, #1d3b3230, transparent),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent-2); text-decoration: none; }
+    .wrap { max-width: 940px; margin: 0 auto; padding: 0 20px; }
+
+    header.nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 0; border-bottom: 1px solid var(--border);
+    }
+    .brand { font-family: var(--font-mono); font-weight: 700; letter-spacing: -0.02em; }
+    .brand span { color: var(--accent); }
+    .nav-links a { margin-left: 22px; color: var(--muted); font-size: 0.92rem; }
+    .nav-links a:hover { color: var(--text); }
+
+    .hero { padding: 84px 0 64px; }
+    .kicker {
+      font-family: var(--font-mono); color: var(--accent); font-size: 0.85rem;
+      letter-spacing: 0.04em; margin-bottom: 14px;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.1;
+      letter-spacing: -0.03em; margin-bottom: 18px;
+    }
+    .hero p.lead { font-size: 1.15rem; color: var(--muted); max-width: 620px; }
+
+    .stack { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .chip {
+      font-family: var(--font-mono); font-size: 0.8rem; color: var(--text);
+      background: var(--panel); border: 1px solid var(--border);
+      padding: 7px 12px; border-radius: 999px;
+    }
+
+    section { padding: 40px 0; }
+    section h2 {
+      font-size: 1.4rem; letter-spacing: -0.02em; margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    section h2::before {
+      content: ""; width: 8px; height: 8px; border-radius: 2px;
+      background: var(--accent);
+    }
+    .muted { color: var(--muted); }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-top: 22px; }
+    .card {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .card h3 { font-size: 1rem; margin-bottom: 6px; }
+    .card p { color: var(--muted); font-size: 0.92rem; }
+
+    /* Contact */
+    .contact-grid { display: grid; grid-template-columns: 1fr; gap: 22px; }
+    form {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 26px;
+    }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 6px; font-family: var(--font-mono); }
+    label .req { color: var(--accent); }
+    input, textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); border-radius: 10px; padding: 12px 14px;
+      font-family: inherit; font-size: 0.98rem; transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px #58e6b025;
+    }
+    textarea { resize: vertical; min-height: 120px; }
+    .field.invalid input, .field.invalid textarea { border-color: var(--danger); }
+    .err { color: var(--danger); font-size: 0.8rem; margin-top: 6px; min-height: 1em; }
+
+    button.submit {
+      width: 100%; background: var(--accent); color: #062018; border: none;
+      font-weight: 700; font-size: 1rem; padding: 13px; border-radius: 10px;
+      cursor: pointer; transition: transform .05s, opacity .15s; font-family: var(--font-sans);
+    }
+    button.submit:hover { opacity: 0.92; }
+    button.submit:active { transform: translateY(1px); }
+    button.submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* Result panel */
+    .result { margin-top: 20px; display: none; }
+    .result.show { display: block; }
+    .result-box {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--panel-2); padding: 20px;
+    }
+    .result-box.ok { border-color: #2ea04340; }
+    .result-box.fail { border-color: #ff7b7240; }
+    .result-title { font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .badge {
+      font-family: var(--font-mono); font-size: 0.76rem; padding: 4px 10px;
+      border-radius: 999px; border: 1px solid var(--border); background: var(--bg);
+    }
+    .badge.pos { color: #7ee2b8; border-color: #2ea04355; }
+    .badge.neg { color: var(--danger); border-color: #ff7b7255; }
+    .badge.neu { color: var(--accent-2); border-color: #6ea8fe55; }
+    .badge.high { color: #ffb454; border-color: #ffb45455; }
+    .kv { font-size: 0.9rem; color: var(--muted); margin-top: 6px; }
+    .kv b { color: var(--text); font-weight: 600; }
+    .reply {
+      margin-top: 12px; padding: 12px 14px; background: var(--bg);
+      border: 1px dashed var(--border); border-radius: 10px;
+      font-size: 0.92rem; white-space: pre-wrap;
+    }
+
+    footer { border-top: 1px solid var(--border); padding: 30px 0; color: var(--muted); font-size: 0.85rem; }
+    .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--muted); margin-right:6px; }
+    .status-dot.live { background:#2ea043; }
+    .status-dot.fallback { background:#ffb454; }
+    .spinner {
+      width: 15px; height: 15px; border: 2px solid #06201855; border-top-color: #062018;
+      border-radius: 50%; display: inline-block; animation: spin .7s linear infinite; vertical-align: -2px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="nav">
+      <div class="brand">alex<span>.</span>rivera</div>
+      <nav class="nav-links">
+        <a href="#about">About</a>
+        <a href="#services">Services</a>
+        <a href="#contact">Contact</a>
+        <a href="/docs">API&nbsp;Docs</a>
+      </nav>
+    </header>
+
+    <section class="hero" id="top">
+      <div class="kicker">// backend engineer · api design · ai integration</div>
+      <h1>I build reliable backends<br />that scale quietly.</h1>
+      <p class="lead">
+        REST &amp; async APIs, clean layered architecture, and pragmatic AI
+        integrations. This very page runs on a FastAPI backend that triages your
+        message with Claude the moment you hit send.
+      </p>
+      <div class="stack">
+        <span class="chip">Python</span>
+        <span class="chip">FastAPI</span>
+        <span class="chip">PostgreSQL</span>
+        <span class="chip">Anthropic&nbsp;API</span>
+        <span class="chip">Docker</span>
+        <span class="chip">CI/CD</span>
+      </div>
+    </section>
+
+    <section id="services">
+      <h2>What I do</h2>
+      <p class="muted">A few things I'm asked for most often.</p>
+      <div class="cards">
+        <div class="card">
+          <h3>API design</h3>
+          <p>RESTful services with sensible status codes, validation, versioning and OpenAPI docs.</p>
+        </div>
+        <div class="card">
+          <h3>AI features</h3>
+          <p>LLM-powered classification, summarization and drafting — with graceful fallbacks.</p>
+        </div>
+        <div class="card">
+          <h3>Reliability</h3>
+          <p>Structured logging, error handling, rate limiting and observability baked in.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <h2>About</h2>
+      <p class="muted" style="max-width: 640px; margin-top: 10px;">
+        I've spent the last several years shipping backend systems for startups
+        and agencies — the unglamorous plumbing that keeps products running.
+        I care about code that's simple to read, safe to change, and honest about
+        its failure modes.
+      </p>
+    </section>
+
+    <section id="contact">
+      <h2>Get in touch</h2>
+      <p class="muted">
+        Send a message and the backend will validate it, analyse it with AI,
+        and email both of us. <span id="ai-status"><span class="status-dot"></span>checking service…</span>
+      </p>
+
+      <div class="contact-grid">
+        <form id="contact-form" novalidate>
+          <div class="field" data-field="name">
+            <label>Name <span class="req">*</span></label>
+            <input name="name" type="text" placeholder="Ada Lovelace" autocomplete="name" />
+            <div class="err"></div>
+          </div>
+          <div class="field" data-field="email">
+            <label>Email <span class="req">*</span></label>
+            <input name="email" type="email" placeholder="ada@example.com" autocomplete="email" />
+            <div class="err"></div>
+          </div>
+          <div class="field" data-field="phone">
+            <label>Phone <span class="muted">(optional)</span></label>
+            <input name="phone" type="tel" placeholder="+1 (555) 123-4567" autocomplete="tel" />
+            <div class="err"></div>
+          </div>
+          <div class="field" data-field="comment">
+            <label>Message <span class="req">*</span></label>
+            <textarea name="comment" placeholder="Tell me about your project…"></textarea>
+            <div class="err"></div>
+          </div>
+          <button type="submit" class="submit" id="submit-btn">Send message</button>
+        </form>
+
+        <div class="result" id="result">
+          <div class="result-box" id="result-box"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="wrap" style="padding:0;">
+        Built with FastAPI + Anthropic Claude · <a href="/docs">Interactive API docs</a> · <a href="/api/metrics">Metrics</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // API base = same origin the page is served from.
+    const API = "";
+
+    const form = document.getElementById("contact-form");
+    const btn = document.getElementById("submit-btn");
+    const resultWrap = document.getElementById("result");
+    const resultBox = document.getElementById("result-box");
+
+    // ── Live service status badge ────────────────────────────────
+    (async () => {
+      const el = document.getElementById("ai-status");
+      try {
+        const r = await fetch(`${API}/api/health`);
+        const h = await r.json();
+        const ai = h.dependencies.ai; // "live" | "fallback"
+        el.innerHTML =
+          `<span class="status-dot ${ai}"></span>AI triage: <b>${ai}</b> · email: ${h.dependencies.email}`;
+      } catch {
+        el.innerHTML = `<span class="status-dot"></span>service offline`;
+      }
+    })();
+
+    function clearErrors() {
+      document.querySelectorAll(".field").forEach((f) => {
+        f.classList.remove("invalid");
+        f.querySelector(".err").textContent = "";
+      });
+    }
+    function showFieldError(field, msg) {
+      const f = document.querySelector(`.field[data-field="${field}"]`);
+      if (!f) return;
+      f.classList.add("invalid");
+      f.querySelector(".err").textContent = msg;
+    }
+
+    const badgeClass = { positive: "pos", negative: "neg", neutral: "neu" };
+
+    function renderSuccess(data) {
+      const a = data.analysis;
+      const prioClass = a.priority === "high" ? "high" : "";
+      resultBox.className = "result-box ok";
+      resultBox.innerHTML = `
+        <div class="result-title">✅ Message received</div>
+        <div class="kv">Reference <b>${data.id}</b></div>
+        <div class="badges">
+          <span class="badge ${badgeClass[a.sentiment] || ""}">sentiment: ${a.sentiment}</span>
+          <span class="badge">category: ${a.category}</span>
+          <span class="badge ${prioClass}">priority: ${a.priority}</span>
+          <span class="badge">${a.ai_available ? "AI ✓ " + (a.model || "") : "fallback"}</span>
+        </div>
+        <div class="kv"><b>Summary:</b> ${escapeHtml(a.summary)}</div>
+        <div class="kv" style="margin-top:10px;"><b>Draft reply I'll review:</b></div>
+        <div class="reply">${escapeHtml(a.suggested_reply)}</div>
+        <div class="kv" style="margin-top:12px;">
+          Owner notified: <b>${data.email.owner_notified ? "yes" : "no"}</b> ·
+          Copy to you: <b>${data.email.user_notified ? "yes" : "no"}</b>
+          <span class="muted">(${data.email.mode})</span>
+        </div>`;
+      resultWrap.classList.add("show");
+    }
+
+    function renderError(title, msg) {
+      resultBox.className = "result-box fail";
+      resultBox.innerHTML =
+        `<div class="result-title">⚠️ ${escapeHtml(title)}</div><div class="kv">${escapeHtml(msg)}</div>`;
+      resultWrap.classList.add("show");
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearErrors();
+      resultWrap.classList.remove("show");
+
+      const payload = {
+        name: form.name.value.trim(),
+        email: form.email.value.trim(),
+        phone: form.phone.value.trim() || null,
+        comment: form.comment.value.trim(),
+      };
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Sending…';
+
+      try {
+        const r = await fetch(`${API}/api/contact`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+
+        if (r.status === 201) {
+          renderSuccess(data);
+          form.reset();
+        } else if (r.status === 422) {
+          (data.error.details || []).forEach((d) => showFieldError(d.field, d.message));
+          renderError("Please fix the highlighted fields", "Some information was invalid.");
+        } else if (r.status === 429) {
+          const retry = r.headers.get("Retry-After") || "a little";
+          renderError("Too many requests", `Please wait ${retry}s before trying again.`);
+        } else {
+          renderError("Something went wrong", (data.error && data.error.message) || "Unexpected error.");
+        }
+      } catch {
+        renderError("Network error", "Could not reach the server. Is it running?");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Send message";
+      }
+    });
+  </script>
+</body>
+</html>

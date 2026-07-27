@@ -1,0 +1,11 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Persist runtime data (logs/metrics/rate-limit) outside the container.
+      - ./data:/app/data
+    restart: unless-stopped
