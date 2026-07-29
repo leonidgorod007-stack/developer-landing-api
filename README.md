@@ -1,5 +1,492 @@
 # Developer Landing API
 
+🇷🇺 **Русский** · 🇬🇧 [English version ↓](#english-version)
+
+Бэкенд-сервис для лендинг-презентации разработчика: форма обратной связи с
+валидацией, **AI-триажом каждого сообщения**, email-уведомлениями (владельцу +
+копия пользователю), rate limiting, структурированным логированием в файл и
+метриками обращений — на чистой слоистой архитектуре.
+
+> Полный цикл запроса, ровно как в ТЗ:
+> **запрос → валидация → бизнес-логика → AI → email → ответ.**
+
+- **Live API:** _запустите локально (ниже) — займёт ~1 минуту. Публичный URL можно поднять на Render/Railway через приложенный Dockerfile._
+- **Интерактивная документация (Swagger UI):** `http://localhost:8000/docs`
+- **Лендинг (фронтенд):** `http://localhost:8000/`
+
+---
+
+## Содержание
+
+1. [Быстрый старт](#1-быстрый-старт)
+2. [Переменные окружения](#2-переменные-окружения)
+3. [Стек технологий](#3-стек-технологий)
+4. [Архитектура](#4-архитектура)
+5. [Описание API](#5-описание-api)
+6. [AI-интеграция](#6-ai-интеграция)
+7. [Что сделано с помощью AI](#7-что-сделано-с-помощью-ai)
+8. [Хранение данных](#8-хранение-данных)
+9. [Тестирование](#9-тестирование)
+10. [Деплой](#10-деплой)
+
+---
+
+## 1. Быстрый старт
+
+Требуется **Python 3.9+** (разрабатывалось и тестировалось на 3.11).
+
+```bash
+# 1. Перейти в папку проекта
+cd "developer-landing-api"
+
+# 2. Создать виртуальное окружение
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# 3. Установить зависимости
+pip install -r requirements.txt
+
+# 4. Настроить окружение (работает из коробки со значениями по умолчанию)
+cp .env.example .env               # Windows: copy .env.example .env
+
+# 5. Запустить
+python run.py                      # или: uvicorn app.main:app --reload
+```
+
+Затем откройте:
+
+| URL | Что |
+|-----|------|
+| <http://localhost:8000/> | Лендинг + рабочая форма обратной связи |
+| <http://localhost:8000/docs> | Swagger UI (эндпоинты можно вызвать вживую) |
+| <http://localhost:8000/api/health> | Статус сервиса и зависимостей |
+
+**Работает без какой-либо настройки.** Без API-ключа и без SMTP-сервера сервис
+всё равно проходит полный цикл: AI-шаг использует детерминированный **fallback**
+на правилах, а письма работают в **console-режиме (dry-run)** (рендерятся в лог
+вместо отправки). Добавьте ключ / SMTP-данные, чтобы включить реальный режим —
+остальное не меняется.
+
+### С Docker
+
+```bash
+cp .env.example .env
+docker compose up --build
+# → http://localhost:8000
+```
+
+---
+
+## 2. Переменные окружения
+
+Вся конфигурация берётся из переменных окружения (или локального `.env`).
+Полный список — в [`.env.example`](.env.example).
+
+| Переменная | По умолчанию | Назначение |
+|----------|---------|---------|
+| `PORT` / `HOST` | `8000` / `0.0.0.0` | Адрес привязки |
+| `CORS_ORIGINS` | `localhost:8000,…` | Разрешённые CORS-origins (через запятую) |
+| `RATE_LIMIT_MAX_REQUESTS` | `5` | Макс. обращений за окно с одного IP |
+| `RATE_LIMIT_WINDOW_SECONDS` | `60` | Длина окна rate limit |
+| `ANTHROPIC_API_KEY` | _(пусто)_ | Включает живой AI; пусто → fallback |
+| `ANTHROPIC_BASE_URL` | _(пусто)_ | Опциональный URL прокси/шлюза; пусто → `api.anthropic.com` |
+| `AI_MODEL` | `claude-sonnet-5` | Модель для триажа |
+| `AI_TIMEOUT_SECONDS` | `12` | Жёсткий таймаут до перехода на fallback |
+| `SMTP_HOST` … `SMTP_PASSWORD` | _(пусто)_ | SMTP-доступы; пусто → console-режим |
+| `OWNER_EMAIL` | `owner@example.com` | Куда идут уведомления владельцу |
+| `LOG_FILE` / `LOG_LEVEL` | `data/logs/app.log` / `INFO` | Логирование в файл |
+| `DATA_DIR` | `data` | Где лежат логи/метрики/rate-limit |
+
+Секреты нигде не хардкодятся; `.env` — в `.gitignore`.
+
+---
+
+## 3. Стек технологий
+
+**Backend**
+- **Язык:** Python 3.11
+- **Фреймворк:** [FastAPI](https://fastapi.tiangolo.com/) — async, встроенная
+  генерация OpenAPI/Swagger и валидация на Pydantic.
+- **Сервер:** Uvicorn (ASGI)
+- **Валидация:** Pydantic v2 + `pydantic-settings` (конфиг из env) + `email-validator`
+- **Email:** `aiosmtplib` (неблокирующий SMTP)
+- **Зависимости:** `pip` + `requirements.txt`
+
+**AI**
+- **Провайдер:** [Anthropic Claude](https://www.anthropic.com/) через официальный
+  SDK `anthropic` (async-клиент).
+- **Модель:** `claude-sonnet-5` — сильная универсальная модель: качественный
+  триаж и грамотные черновики ответов при разумной стоимости. Меняется одной
+  переменной `AI_MODEL` (например, `claude-haiku-4-5` — дешевле/быстрее,
+  `claude-opus-4-8` — максимальное качество).
+- **Механизм:** Claude **tool use** с принудительным `tool_choice` — модель
+  обязана вызвать инструмент `record_triage`, чья input-схема и есть контракт
+  анализа, поэтому результат приходит уже структурированным объектом (без
+  хрупкого парсинга свободного текста).
+
+**Почему FastAPI, а не Flask/Django?** Для API-first сервиса FastAPI даёт
+максимум при минимуме кода: async I/O (в запросе — AI + два письма + запись на
+диск), автоматическая валидация из аннотаций типов и бесплатная генерация
+Swagger/OpenAPI — всё это прямые требования ТЗ.
+
+---
+
+## 4. Архитектура
+
+Строгая **слоистая архитектура** — каждый слой общается только с нижележащим,
+ответственности изолированы, всё тестируется независимо.
+
+```
+          HTTP-запрос
+              │
+   ┌──────────▼───────────┐   Контроллеры (app/api/routes/)
+   │  contact / health /  │   Тонкие: только HTTP — проверка rate-limit,
+   │  metrics routers     │   делегирование, статус-код.
+   └──────────┬───────────┘
+              │
+   ┌──────────▼───────────┐   Сервисы (app/services/)
+   │  ContactService      │   Бизнес-логика и оркестрация:
+   │   ├─ AIService       │   валидация→анализ→email→запись→ответ.
+   │   ├─ EmailService    │
+   │   └─ RateLimiter     │
+   └──────────┬───────────┘
+              │
+   ┌──────────▼───────────┐   Репозитории (app/repositories/)
+   │  SubmissionLogRepo   │   Хранение: JSONL-лог, JSON-метрики,
+   │  MetricsRepo         │   файловое состояние rate-limit.
+   └──────────────────────┘
+
+  Сквозное: app/core/ (глоб. обработчик ошибок + middleware логирования),
+            app/config.py (настройки), app/models/ (схемы / контракт),
+            app/dependencies.py (корень внедрения зависимостей / DI).
+```
+
+### Структура проекта
+
+```
+.
+├── app/
+│   ├── main.py                 # Фабрика приложения: middleware, CORS, обработчики, роуты, статика
+│   ├── config.py               # Настройки из env (.env) на Pydantic
+│   ├── logging_config.py       # Логирование: ротируемый файл + консоль
+│   ├── dependencies.py         # Composition root — сборка и связывание синглтонов
+│   ├── core/
+│   │   ├── exceptions.py        # Доменные ошибки + глобальные обработчики
+│   │   └── middleware.py        # Логирование каждого запроса (id, ip, статус, время)
+│   ├── models/
+│   │   └── schemas.py           # Pydantic-модели запросов/ответов = валидация + контракт OpenAPI
+│   ├── api/routes/
+│   │   ├── contact.py           # POST /api/contact
+│   │   ├── health.py            # GET  /api/health
+│   │   └── metrics.py           # GET  /api/metrics
+│   ├── services/
+│   │   ├── contact_service.py   # Оркестрация всего пайплайна
+│   │   ├── ai_service.py        # Интеграция с Claude + graceful fallback
+│   │   ├── email_service.py     # Письма владельцу + пользователю (SMTP / console)
+│   │   └── rate_limiter.py      # Файловый лимитер со скользящим окном
+│   └── repositories/
+│       ├── log_repository.py    # Append-only JSONL-лог обращений
+│       └── metrics_repository.py# Агрегированные счётчики (атомарный JSON)
+├── frontend/index.html         # Лендинг + форма (общается с API)
+├── tests/test_api.py           # End-to-end тесты (герметичные: fallback AI, console email)
+├── data/                       # Рантайм: логи, метрики, rate-limit (в .gitignore)
+├── requirements.txt · Dockerfile · docker-compose.yml
+├── postman_collection.json · .env.example · README.md
+```
+
+### Использованные паттерны
+
+- **Слоистая / чистая архитектура** — Controllers → Services → Repositories.
+- **Внедрение зависимостей / Composition root** — `dependencies.py` собирает
+  синглтоны один раз и отдаёт их через `Depends`, поэтому сервисы легко
+  подменяются (в тестах подставляется fallback-конфиг без изменения кода).
+- **Repository pattern** — хранилище скрыто за `append()` / `read()` /
+  `record_submission()`; замена JSONL на БД не затронет сервисы.
+- **Strategy + graceful degradation** — у `AIService` и `EmailService` есть
+  реальный бэкенд и fallback за единым интерфейсом.
+- **Глобальный обработчик ошибок** — в одном месте маппит исключения →
+  HTTP-статус + единый JSON-конверт ошибки.
+
+---
+
+## 5. Описание API
+
+Базовый URL (локально): `http://localhost:8000`. Все эндпоинты под `/api`.
+Каждый ответ несёт заголовок `X-Request-ID` для трассировки.
+
+### `POST /api/contact`
+
+Отправка формы. Выполняет валидацию → AI-триаж → письма → сохранение.
+
+**Тело запроса**
+
+| Поле | Тип | Правила |
+|-------|------|-------|
+| `name` | string | обязательно, 2–100 символов, санитизируется |
+| `email` | string | обязательно, валидный email |
+| `phone` | string \| null | опционально, 7–20 символов (`+`, пробелы, `()`, `-`) |
+| `comment` | string | обязательно, 10–2000 символов, санитизируется |
+
+```bash
+curl -X POST http://localhost:8000/api/contact \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "phone": "+1 (555) 123-4567",
+    "comment": "I loved your portfolio and would like to discuss a backend project."
+  }'
+```
+
+**`201 Created`**
+
+```json
+{
+  "success": true,
+  "id": "70289f0672df4bbf",
+  "message": "Thank you! Your message has been received.",
+  "analysis": {
+    "sentiment": "positive",
+    "category": "sales",
+    "priority": "high",
+    "summary": "Ada is interested in discussing a backend project.",
+    "suggested_reply": "Hi Ada, thanks for reaching out — I'd be glad to discuss your project...",
+    "ai_available": true,
+    "model": "claude-sonnet-5"
+  },
+  "email": { "owner_notified": true, "user_notified": true, "mode": "console" }
+}
+```
+
+**`422 Unprocessable Entity`** — валидация не прошла (единый конверт ошибки):
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "One or more fields are invalid.",
+    "details": [
+      { "field": "email", "message": "value is not a valid email address: ..." },
+      { "field": "comment", "message": "String should have at least 10 characters" }
+    ]
+  }
+}
+```
+
+**`429 Too Many Requests`** — превышен лимит (с заголовком `Retry-After`):
+
+```json
+{ "error": { "code": "rate_limited", "message": "Too many requests. Please try again later." } }
+```
+
+### `GET /api/health`
+
+```json
+{
+  "status": "ok",
+  "app": "Developer Landing API",
+  "version": "1.0.0",
+  "uptime_seconds": 16.9,
+  "dependencies": { "ai": "fallback", "email": "console" }
+}
+```
+`dependencies.ai` — `live` или `fallback`; `dependencies.email` — `smtp` или `console`.
+
+### `GET /api/metrics`
+
+```json
+{
+  "total_submissions": 12,
+  "ai_success": 10,
+  "ai_fallback": 2,
+  "emails_sent": 12,
+  "emails_failed": 0,
+  "by_sentiment": { "positive": 7, "neutral": 3, "negative": 2 },
+  "by_category":  { "sales": 5, "hiring": 3, "support": 2, "spam": 2 },
+  "by_priority":  { "high": 6, "medium": 4, "low": 2 },
+  "first_submission_at": "2026-07-27T13:46:53Z",
+  "last_submission_at":  "2026-07-27T18:02:11Z"
+}
+```
+
+### Обработка ошибок и статусы
+
+| Ситуация | Статус | Кто обрабатывает |
+|-----------|--------|-----------|
+| Успех | `200` / `201` | роут |
+| Некорректный ввод | `422` | обработчик валидации → структурированный список полей |
+| Превышен лимит | `429` | `RateLimitError` → заголовок `Retry-After` |
+| AI недоступен | всё равно `201` | внутренний fallback (не всплывает как ошибка) |
+| Ошибка отправки письма | всё равно `201` | фиксируется в статусе `email`, не роняет запрос |
+| Непредвиденная ошибка | `500` | глобальный обработчик (без утечки стектрейса) |
+
+Валидация и санитизация (обрезка, удаление управляющих символов, границы
+длины/формата) происходят в Pydantic-схеме, поэтому слои AI и email всегда
+получают уже чистые данные.
+
+---
+
+## 6. AI-интеграция
+
+**Что делает:** за один вызов Claude каждое сообщение превращается в
+структурированный результат — **анализ тональности**, **классификация
+обращения**, **приоритет**, однострочное **резюме** и **черновик ответа**,
+который владелец может отправить. Письмо владельцу включает этот триаж; ответ
+возвращает его на фронтенд, где он отображается прямо в интерфейсе.
+
+**Провайдер/модель:** Anthropic Claude (`claude-sonnet-5`) через async SDK
+`anthropic`, механизм — **tool use** с принудительным `tool_choice`: модель
+обязана вызвать инструмент `record_triage`, чья `input_schema` и есть контракт
+анализа, поэтому `input` приходит уже разобранным структурированным объектом.
+Это даёт структурированный вывод без зависимости от новейшей фичи SDK
+`output_config` (которой нет в закреплённой версии SDK) и работает на всех
+моделях Claude — без хрупкого парсинга свободного текста.
+
+### Graceful fallback (надёжность)
+
+AI-шаг обёрнут так, что эндпоинт **никогда не падает из-за него**:
+
+1. **Нет API-ключа / AI выключен** → используется детерминированный анализатор на правилах.
+2. **Таймаут** (`AI_TIMEOUT_SECONDS`, по умолч. 12с) → fallback.
+3. **Любая ошибка API/сети/парсинга** → перехватывается, логируется → fallback.
+
+Fallback — классификатор по ключевым словам (тональность по наборам
+позитивных/негативных слов; категория по признакам hiring/sales/spam),
+возвращающий *ту же* структуру `AIAnalysis` с `ai_available: false`. Клиенты и
+слой метрик обрабатывают оба пути одинаково. `GET /api/health` показывает,
+какой путь активен.
+
+### Использованные промпты
+
+**Системный промпт** (в коде — на английском):
+
+> You are the triage assistant for a freelance software developer's contact
+> form. For each inbound message you classify sentiment, assign a request
+> category and priority, summarise it in one sentence, and draft a short, warm,
+> professional reply the developer can send back. Treat obvious spam or
+> marketing solicitations as category 'spam' with low priority. Never invent
+> facts about the developer; keep the reply generic and courteous.
+
+**Пользовательское сообщение:** санитизированные `name`, `email`, `phone`, `comment`.
+
+**Схема инструмента (принудительно через `tool_choice`):** инструмент
+`record_triage` требует `sentiment` ∈ {positive, neutral, negative}, `category` ∈
+{support, sales, hiring, feedback, spam, other}, `priority` ∈ {low, medium, high},
+плюс строки `summary` и `suggested_reply`. См.
+[`app/services/ai_service.py`](app/services/ai_service.py).
+
+---
+
+## 7. Что сделано с помощью AI
+
+Проект написан с **Claude (Claude Code)** в роли пары-программиста.
+
+**Сгенерировано / с помощью AI:**
+- Изначальный каркас слоистой структуры и бойлерплейт (роуты, схемы, скелеты репозиториев).
+- Первые версии fallback-классификатора и HTML/CSS лендинга.
+- Черновики докстрингов и этого README.
+
+**Проверено и исправлено вручную:**
+- **Корректность AI SDK** — в первой версии использовался новейший API
+  структурированного вывода `output_config`; при проверке оказалось, что
+  закреплённая версия SDK его не поддерживает, поэтому вызов переписан на
+  **tool use с принудительным `tool_choice`**, дающий тот же структурированный
+  результат на разных версиях SDK/моделей.
+- **Реальный баг конфига** — появление настоящего `.env` вскрыло, что
+  `pydantic-settings` JSON-декодирует list-поля до валидаторов; починил парсинг
+  `CORS_ORIGINS` через `NoDecode`.
+- **Корректность конкурентности** — весь блокирующий файловый I/O (`RateLimiter`,
+  репозитории) вынесен из event loop через `asyncio.to_thread` под `asyncio.Lock`;
+  записи метрик/rate-limit атомарны (temp-файл + replace), чтобы падение в момент
+  записи не повредило данные.
+- **Границы fallback** — гарантировано, что *любой* сбой AI (нет ключа, таймаут,
+  ошибка API, некорректный вывод) деградирует чисто, а сбой отправки письма не
+  роняет запрос.
+- **Усиление валидации и безопасности** — удаление управляющих символов,
+  регулярка телефона, границы длины; удаление переносов строк в полях,
+  попадающих в заголовки письма (`name`, `phone`), чтобы исключить инъекцию
+  email-заголовков, при этом многострочное тело `comment` сохраняется;
+  выравнивание ошибок Pydantic в дружественный конверт.
+
+**Верификация:** прогнан набор тестов (`8 passed`), и сервер проверен
+end-to-end на живой модели — health, реальное обращение к Claude, метрики,
+валидация 422, rate-limit 429, CORS-preflight, Swagger/OpenAPI и фронтенд.
+
+---
+
+## 8. Хранение данных
+
+База данных не требуется — используется файловая система (как разрешено ТЗ),
+каждая задача в своём файле под `DATA_DIR` (по умолч. `data/`):
+
+| Задача | Файл | Формат | Примечания |
+|---------|------|--------|-------|
+| **Логи запросов** | `data/logs/app.log` | текст (с ротацией) | Каждый HTTP-запрос: id, IP, метод, путь, статус, длительность. Ротация 5 МБ × 5. |
+| **История обращений** | `data/submissions.jsonl` | JSON Lines | По записи на обращение (append-only, устойчиво к сбоям, легко grep'ается). |
+| **Статистика** | `data/metrics.json` | JSON | Агрегированные счётчики; атомарный read-modify-write под локом. |
+| **Rate limiting** | `data/rate_limit.json` | JSON | Скользящее окно `{ip: [timestamps]}`; устаревшие ключи вычищаются. |
+
+**Логи** — настроены централизованно в `logging_config.py`: консоль +
+ротируемый файловый хендлер; middleware пишет строку на каждый запрос.
+**Rate limiting** — скользящее окно по IP (`RATE_LIMIT_MAX_REQUESTS` /
+`RATE_LIMIT_WINDOW_SECONDS`); старые метки вычищаются при каждой проверке,
+простаивающие IP удаляются, чтобы файл не рос. **Статистика** — обновляется
+транзакционно после каждого обращения и отдаётся как есть через `GET /api/metrics`.
+
+Весь доступ к файлам — под `asyncio.Lock` и в пуле потоков, поэтому дисковый I/O
+не блокирует event loop. Каждый репозиторий скрывает своё хранилище за
+небольшим интерфейсом, так что замена на реальную БД (приятный «плюс») —
+локальное изменение.
+
+---
+
+## 9. Тестирование
+
+Герметичные end-to-end тесты (без сети, без API-ключа, без SMTP) прогоняют весь
+стек через FastAPI `TestClient` — успешный путь, валидация, санитизация,
+rate limiting, health и метрики:
+
+```bash
+pip install -r requirements.txt
+pytest -q
+# 8 passed
+```
+
+---
+
+## 10. Деплой
+
+Сервис — стандартное ASGI-приложение, поставляется с `Dockerfile` +
+`docker-compose.yml`, разворачивается на любом контейнерном хостинге.
+
+**Docker (локально или любой хост):**
+```bash
+docker compose up --build       # → http://localhost:8000
+```
+
+**Render / Railway / Fly.io / любой PaaS:**
+1. Указать платформе на этот репозиторий (`Dockerfile` определится автоматически),
+   либо Python-buildpack со стартовой командой
+   `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+2. Задать переменные окружения из [§2](#2-переменные-окружения) в дашборде
+   (минимум `ANTHROPIC_API_KEY` и SMTP-доступы для полного режима; без них тоже
+   работает).
+3. Задеплоить. `GET /api/health` — готовый health-check (в `Dockerfile` уже
+   прописан контейнерный `HEALTHCHECK`).
+
+**Быстро отдать локальный инстанс наружу (ngrok):**
+```bash
+python run.py
+ngrok http 8000                 # поделитесь https-ссылкой
+```
+
+---
+---
+
+# English version
+
+🇬🇧 **English** · 🇷🇺 [Русская версия ↑](#developer-landing-api)
+
 Backend service for a developer's landing-page presentation: a validated
 contact form with **AI triage of every message**, email notifications (owner +
 user copy), rate limiting, structured file logging, and submission metrics —
@@ -442,8 +929,8 @@ localised change.
 ## 9. Testing
 
 Hermetic end-to-end tests (no network, no API key, no SMTP) exercise the whole
-stack through FastAPI's `TestClient` — happy path, validation, rate limiting,
-health and metrics:
+stack through FastAPI's `TestClient` — happy path, validation, sanitisation,
+rate limiting, health and metrics:
 
 ```bash
 pip install -r requirements.txt
