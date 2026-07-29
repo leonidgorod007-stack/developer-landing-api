@@ -87,7 +87,7 @@ See [`.env.example`](.env.example) for the full annotated list.
 | `RATE_LIMIT_MAX_REQUESTS` | `5` | Max submissions per window per IP |
 | `RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate-limit window length |
 | `ANTHROPIC_API_KEY` | _(empty)_ | Enables live AI; empty → fallback |
-| `AI_MODEL` | `claude-haiku-4-5` | Model used for triage |
+| `AI_MODEL` | `claude-sonnet-5` | Model used for triage |
 | `AI_TIMEOUT_SECONDS` | `12` | Hard timeout before falling back |
 | `SMTP_HOST` … `SMTP_PASSWORD` | _(empty)_ | SMTP creds; empty → console mode |
 | `OWNER_EMAIL` | `owner@example.com` | Where owner notifications go |
@@ -112,10 +112,10 @@ Secrets are never hard-coded; `.env` is git-ignored.
 **AI**
 - **Provider:** [Anthropic Claude](https://www.anthropic.com/) via the official
   `anthropic` SDK (async client).
-- **Model:** `claude-haiku-4-5` — a small, fast, inexpensive model. Message
-  triage (sentiment + classification + a short draft reply) is a lightweight
-  task where Haiku is the right engineering trade-off for latency and cost on a
-  public contact form. It's a single env var (`AI_MODEL`) to change.
+- **Model:** `claude-sonnet-5` — a strong general-purpose model that gives
+  high-quality triage and well-written draft replies while staying cost-
+  effective. The model is a single env var (`AI_MODEL`) to change (e.g.
+  `claude-haiku-4-5` for cheaper/faster, `claude-opus-4-8` for maximum quality).
 - **Feature:** Claude **tool use** with a forced `tool_choice` — the model must
   call a `record_triage` tool whose input schema *is* the analysis contract, so
   the result is a schema-shaped object (no brittle free-text JSON parsing).
@@ -249,7 +249,7 @@ curl -X POST http://localhost:8000/api/contact \
     "summary": "Ada is interested in discussing a backend project.",
     "suggested_reply": "Hi Ada, thanks for reaching out — I'd be glad to discuss your project...",
     "ai_available": true,
-    "model": "claude-haiku-4-5"
+    "model": "claude-sonnet-5"
   },
   "email": { "owner_notified": true, "user_notified": true, "mode": "console" }
 }
@@ -331,7 +331,7 @@ structured result — **sentiment analysis**, **request classification**,
 The owner's notification email includes this triage; the response returns it to
 the frontend, which renders it inline.
 
-**Provider/model:** Anthropic Claude (`claude-haiku-4-5`) via the async
+**Provider/model:** Anthropic Claude (`claude-sonnet-5`) via the async
 `anthropic` SDK, using **tool use** with a forced `tool_choice`: the model must
 call a single `record_triage` tool whose `input_schema` is the analysis
 contract, so its `input` comes back as an already-parsed, schema-shaped object.

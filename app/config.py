@@ -51,7 +51,7 @@ class Settings(BaseSettings):
 
     # ── AI provider ────────────────────────────────────────────────
     anthropic_api_key: str = ""
-    ai_model: str = "claude-haiku-4-5"
+    ai_model: str = "claude-sonnet-5"
     ai_timeout_seconds: float = 12.0
     ai_enabled: bool = True
 
