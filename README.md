@@ -78,7 +78,7 @@ docker compose up --build
 ## 2. Environment variables
 
 All configuration comes from environment variables (or a local `.env`).
-See [`.env.example`](.env.example) for the full annotated list.
+See [`.env.example`](.env.example) for the full list.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
@@ -400,12 +400,16 @@ This project was built with **Claude (Claude Code)** as a pair-programmer.
 - **Fallback boundaries** — ensured *every* AI failure mode (missing key,
   timeout, API error, malformed output) degrades cleanly, and that email
   failures never fail the request.
-- **Validation hardening** — control-character stripping, phone regex, and
-  length bounds; flattening Pydantic errors into a client-friendly envelope.
+- **Validation & security hardening** — control-character stripping, phone
+  regex, and length bounds; line-break stripping on header-bound fields
+  (`name`, `phone`) to prevent email-header injection while still allowing
+  multi-line message bodies; flattening Pydantic errors into a client-friendly
+  envelope.
 
-**Verification:** the test suite was run (`6 passed`) and the server was driven
-end-to-end (health, a real submission through the fallback pipeline, metrics,
-422, and 429 all confirmed) before finishing.
+**Verification:** the test suite was run (`8 passed`) and the server was driven
+end-to-end against a live model — health, a real Claude submission, metrics,
+422 validation, 429 rate-limit, CORS preflight, Swagger/OpenAPI, and the
+frontend all confirmed.
 
 ---
 
@@ -444,7 +448,7 @@ health and metrics:
 ```bash
 pip install -r requirements.txt
 pytest -q
-# 6 passed
+# 8 passed
 ```
 
 ---

@@ -6,12 +6,17 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-_PHONE_RE = re.compile(r"^\+?[0-9()\-\s]{7,20}$")
+_PHONE_RE = re.compile(r"^\+?[\d ()\-]{7,20}$")
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+_LINE_BREAKS = re.compile(r"[\r\n\t]+")
 
 
-def _clean(value: str) -> str:
+def _clean_text(value: str) -> str:
     return _CONTROL_CHARS.sub("", value).strip()
+
+
+def _clean_line(value: str) -> str:
+    return _LINE_BREAKS.sub(" ", _CONTROL_CHARS.sub("", value)).strip()
 
 
 class Sentiment(str, Enum):
@@ -41,10 +46,18 @@ class ContactRequest(BaseModel):
     phone: Optional[str] = Field(default=None, max_length=20, examples=["+1 (555) 123-4567"])
     comment: str = Field(..., min_length=10, max_length=2000)
 
-    @field_validator("name", "comment")
+    @field_validator("name")
     @classmethod
-    def _sanitise_text(cls, value: str) -> str:
-        cleaned = _clean(value)
+    def _sanitise_name(cls, value: str) -> str:
+        cleaned = _clean_line(value)
+        if not cleaned:
+            raise ValueError("must not be empty")
+        return cleaned
+
+    @field_validator("comment")
+    @classmethod
+    def _sanitise_comment(cls, value: str) -> str:
+        cleaned = _clean_text(value)
         if not cleaned:
             raise ValueError("must not be empty")
         return cleaned
@@ -54,7 +67,7 @@ class ContactRequest(BaseModel):
     def _validate_phone(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return None
-        cleaned = _clean(value)
+        cleaned = _clean_line(value)
         if cleaned == "":
             return None
         if not _PHONE_RE.match(cleaned):

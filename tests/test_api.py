@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.config import Settings
 from app.main import create_app
+from app.models.schemas import ContactRequest
 
 
 @pytest.fixture
@@ -77,6 +78,25 @@ def test_rate_limiting(client):
     assert r.status_code == 429
     assert r.json()["error"]["code"] == "rate_limited"
     assert int(r.headers["Retry-After"]) >= 1
+
+
+def test_name_sanitised_no_linebreaks():
+    m = ContactRequest(
+        name="Bob\r\nBcc: evil@example.com",
+        email="a@example.com",
+        comment="A perfectly valid message body for testing.",
+    )
+    assert "\n" not in m.name
+    assert "\r" not in m.name
+
+
+def test_comment_keeps_newlines():
+    m = ContactRequest(
+        name="Bob",
+        email="a@example.com",
+        comment="line one\nline two\nline three is fine",
+    )
+    assert "\n" in m.comment
 
 
 def test_metrics_accumulate(client):
