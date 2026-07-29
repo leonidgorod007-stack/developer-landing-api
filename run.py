@@ -1,10 +1,3 @@
-"""
-Local dev entry point: `python run.py`.
-
-Reads HOST/PORT/DEBUG from the environment (.env) and starts uvicorn with
-autoreload in development. In production prefer:
-    uvicorn app.main:app --host 0.0.0.0 --port 8000
-"""
 from __future__ import annotations
 
 import uvicorn

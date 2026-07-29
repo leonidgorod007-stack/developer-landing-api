@@ -1,10 +1,3 @@
-"""
-POST /api/contact — the contact form endpoint.
-
-Thin controller: it enforces the rate limit, delegates the whole pipeline to
-`ContactService`, and returns 201 on success. Validation is handled by the
-`ContactRequest` schema; errors are turned into JSON by the global handlers.
-"""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Request, status

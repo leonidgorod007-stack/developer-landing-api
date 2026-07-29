@@ -1,11 +1,3 @@
-"""
-End-to-end API tests.
-
-They run against a fresh app configured with a temp data dir, AI disabled
-(so the deterministic fallback is exercised) and email in console mode — no
-network, no API key, fully hermetic. Covers the happy path, validation errors,
-rate limiting, and the health/metrics endpoints.
-"""
 from __future__ import annotations
 
 import pytest
@@ -20,9 +12,9 @@ def client(tmp_path):
     settings = Settings(
         data_dir=str(tmp_path / "data"),
         log_file=str(tmp_path / "data" / "logs" / "app.log"),
-        anthropic_api_key="",          # force AI fallback
+        anthropic_api_key="",
         ai_enabled=False,
-        smtp_host="",                  # console email mode
+        smtp_host="",
         rate_limit_max_requests=3,
         rate_limit_window_seconds=60,
         cors_origins=["http://localhost"],
@@ -55,7 +47,7 @@ def test_contact_happy_path(client):
     body = r.json()
     assert body["success"] is True
     assert len(body["id"]) == 16
-    assert body["analysis"]["ai_available"] is False        # fallback used
+    assert body["analysis"]["ai_available"] is False
     assert body["analysis"]["sentiment"] in {"positive", "neutral", "negative"}
     assert body["email"]["owner_notified"] is True
     assert body["email"]["user_notified"] is True
@@ -79,7 +71,6 @@ def test_invalid_phone_rejected(client):
 
 
 def test_rate_limiting(client):
-    # Limit is 3/window; the 4th must be rejected with 429 + Retry-After.
     for _ in range(3):
         assert client.post("/api/contact", json=VALID).status_code == 201
     r = client.post("/api/contact", json=VALID)

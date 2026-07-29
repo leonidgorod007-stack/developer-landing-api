@@ -1,11 +1,3 @@
-"""
-Metrics repository.
-
-Maintains aggregate counters in a single JSON file. Reads/writes are guarded
-by an asyncio lock and executed in a thread pool so the event loop is never
-blocked. The whole file is small (a handful of counters), so read-modify-write
-is perfectly adequate here and keeps the code obvious.
-"""
 from __future__ import annotations
 
 import asyncio
@@ -51,7 +43,6 @@ class MetricsRepository:
         ai_success: bool,
         email_sent: bool,
     ) -> None:
-        """Atomically update all counters for one submission."""
         now = datetime.now(timezone.utc).isoformat()
         async with self._lock:
             await asyncio.to_thread(
@@ -59,14 +50,12 @@ class MetricsRepository:
                 sentiment, category, priority, ai_success, email_sent, now,
             )
 
-    # ── internals (run inside a thread, under the lock) ────────────
     def _read_unlocked(self) -> dict:
         if not self._path.exists():
             return _empty_metrics()
         try:
             with self._path.open("r", encoding="utf-8") as fh:
                 data = json.load(fh)
-            # Merge with defaults so newly-added counters never KeyError.
             base = _empty_metrics()
             base.update(data)
             return base
@@ -93,8 +82,6 @@ class MetricsRepository:
         self._write_atomic(m)
 
     def _write_atomic(self, data: dict) -> None:
-        # Write to a temp file then replace, so a crash mid-write can't corrupt
-        # the metrics file.
         tmp = self._path.with_suffix(".tmp")
         with tmp.open("w", encoding="utf-8") as fh:
             json.dump(data, fh, ensure_ascii=False, indent=2)

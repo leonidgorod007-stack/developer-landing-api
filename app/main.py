@@ -1,14 +1,6 @@
-"""
-Application factory & assembly.
-
-Wires everything together: config → logging → DI container → middleware →
-CORS → exception handlers → routers → static frontend. `create_app()` is the
-single entry point used by both uvicorn and the tests.
-"""
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,7 +24,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        # Build long-lived singletons once, expose via app.state.
         app.state.container = build_container(settings)
         logger.info(
             "%s v%s starting (env=%s, ai=%s, email=%s)",
@@ -57,8 +48,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/openapi.json",
     )
 
-    # Order matters: request-logging runs outermost so it times everything;
-    # CORS is added after so it wraps responses (incl. preflight).
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
@@ -72,7 +61,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     register_exception_handlers(app)
 
-    # API routes under /api.
     app.include_router(contact.router, prefix="/api")
     app.include_router(health.router, prefix="/api")
     app.include_router(metrics.router, prefix="/api")
@@ -82,7 +70,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 def _mount_frontend(app: FastAPI) -> None:
-    """Serve the landing page at / and any static assets under /assets."""
     index = FRONTEND_DIR / "index.html"
     if not index.exists():
         return
@@ -96,5 +83,4 @@ def _mount_frontend(app: FastAPI) -> None:
         return FileResponse(index)
 
 
-# Module-level app so `uvicorn app.main:app` works out of the box.
 app = create_app()

@@ -6,6 +6,5 @@ services:
     env_file:
       - .env
     volumes:
-      # Persist runtime data (logs/metrics/rate-limit) outside the container.
       - ./data:/app/data
     restart: unless-stopped

@@ -1,12 +1,3 @@
-"""
-Dependency wiring.
-
-Builds the singletons (repositories + services) once at startup and stashes
-them on `app.state`. FastAPI dependency functions then pull them from the
-current request, so route handlers receive fully-constructed services without
-knowing how they're built. This keeps construction in one place and makes the
-services trivially swappable in tests.
-"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -24,8 +15,6 @@ from app.services.rate_limiter import RateLimiter
 
 @dataclass
 class Container:
-    """Holds the application's long-lived singletons."""
-
     settings: Settings
     rate_limiter: RateLimiter
     ai_service: AIService

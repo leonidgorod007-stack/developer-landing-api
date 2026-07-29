@@ -1,11 +1,3 @@
-"""
-Domain exceptions and the global error handlers.
-
-Business logic raises these typed exceptions; the handlers registered in
-`register_exception_handlers` translate them into consistent JSON error
-responses with the right HTTP status code. This keeps status-code decisions
-out of the service layer and guarantees a uniform error envelope.
-"""
 from __future__ import annotations
 
 import logging
@@ -19,8 +11,6 @@ logger = logging.getLogger("app.errors")
 
 
 class AppError(Exception):
-    """Base class for all expected, handled application errors."""
-
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
     error_code: str = "internal_error"
     message: str = "An unexpected error occurred."
@@ -56,8 +46,6 @@ def _error_body(error_code: str, message: str, details: object | None = None) ->
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    """Attach global handlers so every error path returns a uniform envelope."""
-
     @app.exception_handler(AppError)
     async def _app_error_handler(request: Request, exc: AppError) -> JSONResponse:
         logger.warning(
@@ -77,7 +65,6 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def _validation_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        # Flatten pydantic errors into a compact, client-friendly list.
         details = [
             {
                 "field": ".".join(str(p) for p in err["loc"] if p != "body"),
@@ -104,7 +91,6 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unhandled_handler(request: Request, exc: Exception) -> JSONResponse:
-        # Last line of defence: never leak a stack trace to the client.
         logger.exception(
             "Unhandled error on %s %s", request.method, request.url.path
         )

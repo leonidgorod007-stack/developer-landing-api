@@ -1,25 +1,10 @@
-"""
-Contact service — orchestrates the full submission pipeline.
-
-This is the single place that ties the layers together for a contact request:
-
-    validate (done by schema) → AI analysis → send emails
-        → persist log + metrics → build response
-
-Controllers stay thin (HTTP concerns only); repositories/other services stay
-focused. All ordering and business decisions live here.
-"""
 from __future__ import annotations
 
 import logging
 import uuid
 from datetime import datetime, timezone
 
-from app.models.schemas import (
-    AIAnalysis,
-    ContactRequest,
-    ContactResponse,
-)
+from app.models.schemas import AIAnalysis, ContactRequest, ContactResponse
 from app.repositories.log_repository import SubmissionLogRepository
 from app.repositories.metrics_repository import MetricsRepository
 from app.services.ai_service import AIService
@@ -47,17 +32,13 @@ class ContactService:
         submission_id = uuid.uuid4().hex[:16]
         logger.info("Processing submission %s from %s", submission_id, submission.email)
 
-        # 1. AI analysis (always returns a result — internal fallback).
         analysis: AIAnalysis = await self._ai.analyze(submission)
 
-        # 2. Email notifications (owner + user copy). Failures are captured in
-        #    the delivery status, not raised — the submission is still valuable.
         email_status = await self._email.send_submission_emails(
             submission, analysis, submission_id
         )
         emails_ok = email_status.owner_notified and email_status.user_notified
 
-        # 3. Persist: append the submission log, then update aggregate metrics.
         await self._logs.append(
             {
                 "id": submission_id,

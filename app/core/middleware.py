@@ -1,11 +1,3 @@
-"""
-Request logging middleware.
-
-Logs every incoming HTTP request to the file/console configured in
-`logging_config`, including method, path, status code, duration and the
-client IP. A per-request id is attached so a single request can be traced
-across log lines and returned to the client via the `X-Request-ID` header.
-"""
 from __future__ import annotations
 
 import logging
@@ -20,7 +12,6 @@ logger = logging.getLogger("app.requests")
 
 
 def client_ip(request: Request) -> str:
-    """Best-effort client IP, honouring a reverse proxy's X-Forwarded-For."""
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
@@ -37,7 +28,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         try:
             response = await call_next(request)
         except Exception:
-            # The global exception handler builds the response; we still log timing.
             elapsed_ms = (time.perf_counter() - start) * 1000
             logger.error(
                 'id=%s ip=%s "%s %s" -> ERROR %.1fms',

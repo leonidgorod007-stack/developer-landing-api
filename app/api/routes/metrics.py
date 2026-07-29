@@ -1,4 +1,3 @@
-"""GET /api/metrics — aggregate submission statistics (read from file)."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends

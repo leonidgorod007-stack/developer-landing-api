@@ -1,10 +1,3 @@
-"""
-Application configuration.
-
-All settings are loaded from environment variables (or a local `.env` file)
-via pydantic-settings, so nothing sensitive is ever hard-coded. A single
-`Settings` instance is created once and reused across the app.
-"""
 from __future__ import annotations
 
 from functools import lru_cache
@@ -14,8 +7,6 @@ from typing import Annotated
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-# Project root = one directory above /app. Relative paths in .env are resolved
-# against this so the service behaves the same regardless of CWD.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -27,38 +18,29 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    # ── Application ────────────────────────────────────────────────
     app_name: str = "Developer Landing API"
     app_env: str = "development"
     debug: bool = True
     host: str = "0.0.0.0"
     port: int = 8000
 
-    # NoDecode stops pydantic-settings from JSON-parsing the raw env value, so a
-    # plain comma-separated string reaches the `_split_cors` validator below.
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:8000"]
     )
 
-    # ── Storage / logging ──────────────────────────────────────────
     data_dir: str = "data"
     log_file: str = "data/logs/app.log"
     log_level: str = "INFO"
 
-    # ── Rate limiting ──────────────────────────────────────────────
     rate_limit_max_requests: int = 5
     rate_limit_window_seconds: int = 60
 
-    # ── AI provider ────────────────────────────────────────────────
     anthropic_api_key: str = ""
-    # Optional: point the SDK at a proxy / gateway that speaks the Anthropic
-    # API (leave empty to use the official https://api.anthropic.com).
     anthropic_base_url: str = ""
     ai_model: str = "claude-sonnet-5"
     ai_timeout_seconds: float = 12.0
     ai_enabled: bool = True
 
-    # ── Email / SMTP ───────────────────────────────────────────────
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
@@ -71,12 +53,10 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_cors(cls, value: object) -> object:
-        """Allow a comma-separated string in the env var."""
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
 
-    # ── Derived helpers ────────────────────────────────────────────
     @property
     def data_path(self) -> Path:
         return self._abs(self.data_dir)
@@ -91,7 +71,6 @@ class Settings(BaseSettings):
 
     @property
     def email_configured(self) -> bool:
-        """True when real SMTP delivery is possible; otherwise dry-run mode."""
         return bool(self.smtp_host and self.smtp_from_email)
 
     def _abs(self, value: str) -> Path:
@@ -101,5 +80,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Cached accessor so the file is parsed only once per process."""
     return Settings()

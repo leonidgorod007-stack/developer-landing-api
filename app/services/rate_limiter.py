@@ -1,12 +1,3 @@
-"""
-File-based, per-IP sliding-window rate limiter (anti-spam).
-
-State lives in a single JSON file: `{ip: [unix_timestamps...]}`. On each check
-we prune timestamps older than the window and count what remains. It's simple,
-dependency-free, and survives restarts — appropriate for a single-instance
-service. For multi-instance deployments you'd swap this class for a Redis-backed
-one behind the same interface.
-"""
 from __future__ import annotations
 
 import asyncio
@@ -27,12 +18,6 @@ class RateLimiter:
         self._lock = asyncio.Lock()
 
     async def check(self, key: str) -> tuple[bool, int]:
-        """
-        Register an attempt for `key` (typically the client IP).
-
-        Returns (allowed, retry_after_seconds). When not allowed, retry_after
-        is how long until the oldest in-window request expires.
-        """
         now = time.time()
         async with self._lock:
             return await asyncio.to_thread(self._check_unlocked, key, now)
@@ -40,8 +25,6 @@ class RateLimiter:
     def _check_unlocked(self, key: str, now: float) -> tuple[bool, int]:
         data = self._load()
         cutoff = now - self._window
-
-        # Prune this key's timestamps to the active window.
         hits = [ts for ts in data.get(key, []) if ts > cutoff]
 
         if len(hits) >= self._max:
@@ -58,7 +41,6 @@ class RateLimiter:
         return True, 0
 
     def _prune_idle(self, data: dict, cutoff: float) -> None:
-        """Drop keys with no in-window activity to stop the file growing forever."""
         stale = [k for k, ts in data.items() if not any(t > cutoff for t in ts)]
         for k in stale:
             del data[k]

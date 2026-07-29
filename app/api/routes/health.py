@@ -1,4 +1,3 @@
-"""GET /api/health — liveness + dependency status."""
 from __future__ import annotations
 
 import time

@@ -1,4 +1,3 @@
-"""Make the project root importable so `import app...` works under pytest."""
 import sys
 from pathlib import Path
 

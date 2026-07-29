@@ -78,7 +78,6 @@
     .card h3 { font-size: 1rem; margin-bottom: 6px; }
     .card p { color: var(--muted); font-size: 0.92rem; }
 
-    /* Contact */
     .contact-grid { display: grid; grid-template-columns: 1fr; gap: 22px; }
     form {
       background: var(--panel); border: 1px solid var(--border);
@@ -109,7 +108,6 @@
     button.submit:active { transform: translateY(1px); }
     button.submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
-    /* Result panel */
     .result { margin-top: 20px; display: none; }
     .result.show { display: block; }
     .result-box {
@@ -252,7 +250,6 @@
   </div>
 
   <script>
-    // API base = same origin the page is served from.
     const API = "";
 
     const form = document.getElementById("contact-form");
@@ -260,13 +257,12 @@
     const resultWrap = document.getElementById("result");
     const resultBox = document.getElementById("result-box");
 
-    // ── Live service status badge ────────────────────────────────
     (async () => {
       const el = document.getElementById("ai-status");
       try {
         const r = await fetch(`${API}/api/health`);
         const h = await r.json();
-        const ai = h.dependencies.ai; // "live" | "fallback"
+        const ai = h.dependencies.ai;
         el.innerHTML =
           `<span class="status-dot ${ai}"></span>AI triage: <b>${ai}</b> · email: ${h.dependencies.email}`;
       } catch {

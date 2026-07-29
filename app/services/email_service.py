@@ -1,16 +1,3 @@
-"""
-Email service.
-
-Sends two messages per submission:
-  1. a notification to the site owner (with the AI triage attached), and
-  2. a confirmation copy to the user who submitted the form.
-
-If SMTP isn't configured (no SMTP_HOST) the service runs in "console" mode:
-the fully-rendered emails are logged instead of sent, so the whole request
-pipeline still works end-to-end in development and on hosts without mail
-credentials. Real SMTP failures are surfaced to the caller as delivery status
-rather than crashing the request.
-"""
 from __future__ import annotations
 
 import logging
@@ -45,7 +32,6 @@ class EmailService:
             owner_notified=owner_ok, user_notified=user_ok, mode=self._mode
         )
 
-    # ── Delivery ───────────────────────────────────────────────────
     async def _deliver(self, message: EmailMessage, *, label: str) -> bool:
         if self._mode == "console":
             logger.info(
@@ -67,12 +53,11 @@ class EmailService:
             )
             logger.info("Email delivered (%s) to %s", label, message["To"])
             return True
-        except Exception as exc:  # SMTP/connection errors must not crash the request
+        except Exception as exc:
             logger.error("Email delivery failed (%s) to %s: %s",
                          label, message["To"], exc)
             return False
 
-    # ── Rendering ──────────────────────────────────────────────────
     def _from(self) -> str:
         return formataddr((self._s.smtp_from_name, self._s.smtp_from_email))
 

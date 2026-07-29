@@ -1,20 +1,3 @@
-"""
-AI service — analyses each contact submission with Claude.
-
-In a single call it produces a structured analysis:
-  • sentiment      (positive / neutral / negative)
-  • category       (support / sales / hiring / feedback / spam / other)
-  • priority       (low / medium / high)
-  • summary        (one sentence)
-  • suggested_reply (a draft the owner can send back)
-
-Reliability is the priority: the call is bounded by a timeout and uses Claude
-*tool use* with a forced `tool_choice` — the model must call our `record_triage`
-tool, so its `input` comes back as a schema-shaped object (no brittle free-text
-JSON parsing). If the API key is missing, the request times out, or anything
-else goes wrong, the service degrades to a deterministic rule-based fallback so
-the endpoint never fails because of the AI step.
-"""
 from __future__ import annotations
 
 import asyncio
@@ -31,9 +14,6 @@ from app.models.schemas import (
 
 logger = logging.getLogger("app.ai")
 
-# A single tool whose input schema *is* our analysis contract. Forcing the model
-# to call it (tool_choice) yields a parsed, schema-shaped `input` object — the
-# structured-output pattern that works across all Claude models and SDK versions.
 _TRIAGE_TOOL = {
     "name": "record_triage",
     "description": "Record the triage analysis of an inbound contact message.",
@@ -88,14 +68,13 @@ class AIService:
 
                 client_kwargs = {"api_key": settings.anthropic_api_key}
                 if settings.anthropic_base_url:
-                    # Route through a proxy / gateway when configured.
                     client_kwargs["base_url"] = settings.anthropic_base_url
                 self._client = AsyncAnthropic(**client_kwargs)
                 logger.info(
                     "AI service ready (model=%s, base_url=%s)",
                     settings.ai_model, settings.anthropic_base_url or "default",
                 )
-            except Exception as exc:  # pragma: no cover - import/env issues
+            except Exception as exc:
                 logger.error("Failed to init Anthropic client, using fallback: %s", exc)
         else:
             logger.warning("AI not configured — analysis will use rule-based fallback.")
@@ -105,7 +84,6 @@ class AIService:
         return self._client is not None
 
     async def analyze(self, submission: ContactRequest) -> AIAnalysis:
-        """Analyse a submission, always returning a valid AIAnalysis."""
         if self._client is None:
             return self._fallback(submission, reason="not_configured")
 
@@ -118,7 +96,7 @@ class AIService:
             logger.warning("AI analysis timed out after %ss — falling back",
                            self._settings.ai_timeout_seconds)
             return self._fallback(submission, reason="timeout")
-        except Exception as exc:  # network, API, parsing — never bubble up
+        except Exception as exc:
             logger.error("AI analysis failed (%s) — falling back", exc)
             return self._fallback(submission, reason="error")
 
@@ -137,8 +115,6 @@ class AIService:
             tool_choice={"type": "tool", "name": _TRIAGE_TOOL["name"]},
             messages=[{"role": "user", "content": user_content}],
         )
-        # Forcing the tool guarantees a tool_use block whose `input` is already a
-        # dict shaped like our schema — no free-text JSON parsing required.
         tool_use = next(b for b in response.content if b.type == "tool_use")
         data = tool_use.input
         logger.info(
@@ -155,7 +131,6 @@ class AIService:
             model=self._settings.ai_model,
         )
 
-    # ── Deterministic fallback ─────────────────────────────────────
     _NEG_WORDS = {
         "bad", "terrible", "awful", "hate", "angry", "broken", "bug", "issue",
         "problem", "disappointed", "refund", "worst", "slow", "error", "fail",
