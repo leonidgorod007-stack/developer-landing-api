@@ -87,6 +87,7 @@ See [`.env.example`](.env.example) for the full annotated list.
 | `RATE_LIMIT_MAX_REQUESTS` | `5` | Max submissions per window per IP |
 | `RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate-limit window length |
 | `ANTHROPIC_API_KEY` | _(empty)_ | Enables live AI; empty → fallback |
+| `ANTHROPIC_BASE_URL` | _(empty)_ | Optional proxy/gateway URL; empty → `api.anthropic.com` |
 | `AI_MODEL` | `claude-sonnet-5` | Model used for triage |
 | `AI_TIMEOUT_SECONDS` | `12` | Hard timeout before falling back |
 | `SMTP_HOST` … `SMTP_PASSWORD` | _(empty)_ | SMTP creds; empty → console mode |
