@@ -51,6 +51,9 @@ class Settings(BaseSettings):
 
     # ── AI provider ────────────────────────────────────────────────
     anthropic_api_key: str = ""
+    # Optional: point the SDK at a proxy / gateway that speaks the Anthropic
+    # API (leave empty to use the official https://api.anthropic.com).
+    anthropic_base_url: str = ""
     ai_model: str = "claude-sonnet-5"
     ai_timeout_seconds: float = 12.0
     ai_enabled: bool = True

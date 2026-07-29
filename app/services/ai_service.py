@@ -86,8 +86,15 @@ class AIService:
             try:
                 from anthropic import AsyncAnthropic
 
-                self._client = AsyncAnthropic(api_key=settings.anthropic_api_key)
-                logger.info("AI service ready (model=%s)", settings.ai_model)
+                client_kwargs = {"api_key": settings.anthropic_api_key}
+                if settings.anthropic_base_url:
+                    # Route through a proxy / gateway when configured.
+                    client_kwargs["base_url"] = settings.anthropic_base_url
+                self._client = AsyncAnthropic(**client_kwargs)
+                logger.info(
+                    "AI service ready (model=%s, base_url=%s)",
+                    settings.ai_model, settings.anthropic_base_url or "default",
+                )
             except Exception as exc:  # pragma: no cover - import/env issues
                 logger.error("Failed to init Anthropic client, using fallback: %s", exc)
         else:
