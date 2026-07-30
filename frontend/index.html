@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alex Rivera — Backend Developer</title>
+  <title>Алекс Ривера — Backend-разработчик</title>
   <style>
     :root {
       --bg: #0d1117;
@@ -50,7 +50,7 @@
       font-size: clamp(2.2rem, 6vw, 3.6rem); line-height: 1.1;
       letter-spacing: -0.03em; margin-bottom: 18px;
     }
-    .hero p.lead { font-size: 1.15rem; color: var(--muted); max-width: 620px; }
+    .hero p.lead { font-size: 1.15rem; color: var(--muted); max-width: 640px; }
 
     .stack { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
     .chip {
@@ -150,20 +150,20 @@
     <header class="nav">
       <div class="brand">alex<span>.</span>rivera</div>
       <nav class="nav-links">
-        <a href="#about">About</a>
-        <a href="#services">Services</a>
-        <a href="#contact">Contact</a>
-        <a href="/docs">API&nbsp;Docs</a>
+        <a href="#about">Обо мне</a>
+        <a href="#services">Услуги</a>
+        <a href="#contact">Контакты</a>
+        <a href="/docs">API-документация</a>
       </nav>
     </header>
 
     <section class="hero" id="top">
-      <div class="kicker">// backend engineer · api design · ai integration</div>
-      <h1>I build reliable backends<br />that scale quietly.</h1>
+      <div class="kicker">// backend-инженер · проектирование API · AI-интеграция</div>
+      <h1>Создаю надёжные бэкенды,<br />которые тихо масштабируются.</h1>
       <p class="lead">
-        REST &amp; async APIs, clean layered architecture, and pragmatic AI
-        integrations. This very page runs on a FastAPI backend that triages your
-        message with Claude the moment you hit send.
+        REST и асинхронные API, чистая слоистая архитектура и прагматичные
+        AI-интеграции. Эта страница работает на FastAPI-бэкенде, который
+        разбирает ваше сообщение через Claude сразу после отправки.
       </p>
       <div class="stack">
         <span class="chip">Python</span>
@@ -176,46 +176,46 @@
     </section>
 
     <section id="services">
-      <h2>What I do</h2>
-      <p class="muted">A few things I'm asked for most often.</p>
+      <h2>Чем занимаюсь</h2>
+      <p class="muted">То, о чём меня просят чаще всего.</p>
       <div class="cards">
         <div class="card">
-          <h3>API design</h3>
-          <p>RESTful services with sensible status codes, validation, versioning and OpenAPI docs.</p>
+          <h3>Проектирование API</h3>
+          <p>RESTful-сервисы с осмысленными статус-кодами, валидацией, версионированием и OpenAPI-документацией.</p>
         </div>
         <div class="card">
-          <h3>AI features</h3>
-          <p>LLM-powered classification, summarization and drafting — with graceful fallbacks.</p>
+          <h3>AI-функции</h3>
+          <p>Классификация, суммаризация и черновики ответов на базе LLM — с надёжным graceful fallback.</p>
         </div>
         <div class="card">
-          <h3>Reliability</h3>
-          <p>Structured logging, error handling, rate limiting and observability baked in.</p>
+          <h3>Надёжность</h3>
+          <p>Структурированное логирование, обработка ошибок, rate limiting и наблюдаемость «из коробки».</p>
         </div>
       </div>
     </section>
 
     <section id="about">
-      <h2>About</h2>
+      <h2>Обо мне</h2>
       <p class="muted" style="max-width: 640px; margin-top: 10px;">
-        I've spent the last several years shipping backend systems for startups
-        and agencies — the unglamorous plumbing that keeps products running.
-        I care about code that's simple to read, safe to change, and honest about
-        its failure modes.
+        Последние несколько лет делаю бэкенд-системы для стартапов и агентств —
+        ту самую негламурную «сантехнику», на которой держатся продукты. Ценю
+        код, который просто читать, безопасно менять и который честен насчёт
+        своих сценариев отказа.
       </p>
     </section>
 
     <section id="contact">
-      <h2>Get in touch</h2>
+      <h2>Связаться со мной</h2>
       <p class="muted">
-        Send a message and the backend will validate it, analyse it with AI,
-        and email both of us. <span id="ai-status"><span class="status-dot"></span>checking service…</span>
+        Отправьте сообщение — бэкенд его провалидирует, разберёт с помощью AI и
+        отправит письма нам обоим. <span id="ai-status"><span class="status-dot"></span>проверяю сервис…</span>
       </p>
 
       <div class="contact-grid">
         <form id="contact-form" novalidate>
           <div class="field" data-field="name">
-            <label>Name <span class="req">*</span></label>
-            <input name="name" type="text" placeholder="Ada Lovelace" autocomplete="name" />
+            <label>Имя <span class="req">*</span></label>
+            <input name="name" type="text" placeholder="Ада Лавлейс" autocomplete="name" />
             <div class="err"></div>
           </div>
           <div class="field" data-field="email">
@@ -224,16 +224,16 @@
             <div class="err"></div>
           </div>
           <div class="field" data-field="phone">
-            <label>Phone <span class="muted">(optional)</span></label>
-            <input name="phone" type="tel" placeholder="+1 (555) 123-4567" autocomplete="tel" />
+            <label>Телефон <span class="muted">(необязательно)</span></label>
+            <input name="phone" type="tel" placeholder="+7 (912) 345-67-89" autocomplete="tel" />
             <div class="err"></div>
           </div>
           <div class="field" data-field="comment">
-            <label>Message <span class="req">*</span></label>
-            <textarea name="comment" placeholder="Tell me about your project…"></textarea>
+            <label>Сообщение <span class="req">*</span></label>
+            <textarea name="comment" placeholder="Расскажите о вашем проекте…"></textarea>
             <div class="err"></div>
           </div>
-          <button type="submit" class="submit" id="submit-btn">Send message</button>
+          <button type="submit" class="submit" id="submit-btn">Отправить</button>
         </form>
 
         <div class="result" id="result">
@@ -244,7 +244,7 @@
 
     <footer>
       <div class="wrap" style="padding:0;">
-        Built with FastAPI + Anthropic Claude · <a href="/docs">Interactive API docs</a> · <a href="/api/metrics">Metrics</a>
+        Сделано на FastAPI + Anthropic Claude · <a href="/docs">Интерактивная API-документация</a> · <a href="/api/metrics">Метрики</a>
       </div>
     </footer>
   </div>
@@ -257,6 +257,12 @@
     const resultWrap = document.getElementById("result");
     const resultBox = document.getElementById("result-box");
 
+    const sentimentRu = { positive: "позитивная", neutral: "нейтральная", negative: "негативная" };
+    const categoryRu = { support: "поддержка", sales: "продажи", hiring: "найм", feedback: "отзыв", spam: "спам", other: "другое" };
+    const priorityRu = { low: "низкий", medium: "средний", high: "высокий" };
+    const aiStateRu = { live: "рабочий", fallback: "запасной" };
+    const emailStateRu = { smtp: "SMTP", console: "консоль" };
+
     (async () => {
       const el = document.getElementById("ai-status");
       try {
@@ -264,9 +270,9 @@
         const h = await r.json();
         const ai = h.dependencies.ai;
         el.innerHTML =
-          `<span class="status-dot ${ai}"></span>AI triage: <b>${ai}</b> · email: ${h.dependencies.email}`;
+          `<span class="status-dot ${ai}"></span>AI-разбор: <b>${aiStateRu[ai] || ai}</b> · почта: ${emailStateRu[h.dependencies.email] || h.dependencies.email}`;
       } catch {
-        el.innerHTML = `<span class="status-dot"></span>service offline`;
+        el.innerHTML = `<span class="status-dot"></span>сервис недоступен`;
       }
     })();
 
@@ -290,21 +296,21 @@
       const prioClass = a.priority === "high" ? "high" : "";
       resultBox.className = "result-box ok";
       resultBox.innerHTML = `
-        <div class="result-title">✅ Message received</div>
-        <div class="kv">Reference <b>${data.id}</b></div>
+        <div class="result-title">✅ Сообщение получено</div>
+        <div class="kv">Номер обращения: <b>${data.id}</b></div>
         <div class="badges">
-          <span class="badge ${badgeClass[a.sentiment] || ""}">sentiment: ${a.sentiment}</span>
-          <span class="badge">category: ${a.category}</span>
-          <span class="badge ${prioClass}">priority: ${a.priority}</span>
-          <span class="badge">${a.ai_available ? "AI ✓ " + (a.model || "") : "fallback"}</span>
+          <span class="badge ${badgeClass[a.sentiment] || ""}">тональность: ${sentimentRu[a.sentiment] || a.sentiment}</span>
+          <span class="badge">категория: ${categoryRu[a.category] || a.category}</span>
+          <span class="badge ${prioClass}">приоритет: ${priorityRu[a.priority] || a.priority}</span>
+          <span class="badge">${a.ai_available ? "AI ✓ " + (a.model || "") : "запасной режим"}</span>
         </div>
-        <div class="kv"><b>Summary:</b> ${escapeHtml(a.summary)}</div>
-        <div class="kv" style="margin-top:10px;"><b>Draft reply I'll review:</b></div>
+        <div class="kv"><b>Резюме:</b> ${escapeHtml(a.summary)}</div>
+        <div class="kv" style="margin-top:10px;"><b>Черновик ответа (проверю перед отправкой):</b></div>
         <div class="reply">${escapeHtml(a.suggested_reply)}</div>
         <div class="kv" style="margin-top:12px;">
-          Owner notified: <b>${data.email.owner_notified ? "yes" : "no"}</b> ·
-          Copy to you: <b>${data.email.user_notified ? "yes" : "no"}</b>
-          <span class="muted">(${data.email.mode})</span>
+          Владелец уведомлён: <b>${data.email.owner_notified ? "да" : "нет"}</b> ·
+          Копия вам: <b>${data.email.user_notified ? "да" : "нет"}</b>
+          <span class="muted">(${emailStateRu[data.email.mode] || data.email.mode})</span>
         </div>`;
       resultWrap.classList.add("show");
     }
@@ -321,6 +327,20 @@
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
+    function ruError(msg) {
+      const m = String(msg).replace(/^Value error,\s*/i, "");
+      if (/at least 2 char/i.test(m)) return "Минимум 2 символа";
+      if (/at least 10 char/i.test(m)) return "Минимум 10 символов";
+      if (/at most 100 char/i.test(m)) return "Не больше 100 символов";
+      if (/at most 20 char/i.test(m)) return "Не больше 20 символов";
+      if (/at most 2000 char/i.test(m)) return "Не больше 2000 символов";
+      if (/valid email/i.test(m)) return "Некорректный email";
+      if (/phone number/i.test(m)) return "Некорректный телефон (7–20 цифр)";
+      if (/field required/i.test(m)) return "Поле обязательно для заполнения";
+      if (/must not be empty/i.test(m)) return "Поле не может быть пустым";
+      return m;
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearErrors();
@@ -334,7 +354,7 @@
       };
 
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Sending…';
+      btn.innerHTML = '<span class="spinner"></span> Отправляю…';
 
       try {
         const r = await fetch(`${API}/api/contact`, {
@@ -348,19 +368,19 @@
           renderSuccess(data);
           form.reset();
         } else if (r.status === 422) {
-          (data.error.details || []).forEach((d) => showFieldError(d.field, d.message));
-          renderError("Please fix the highlighted fields", "Some information was invalid.");
+          (data.error.details || []).forEach((d) => showFieldError(d.field, ruError(d.message)));
+          renderError("Проверьте выделенные поля", "Некоторые данные заполнены неверно.");
         } else if (r.status === 429) {
-          const retry = r.headers.get("Retry-After") || "a little";
-          renderError("Too many requests", `Please wait ${retry}s before trying again.`);
+          const retry = r.headers.get("Retry-After") || "немного";
+          renderError("Слишком много запросов", `Подождите ${retry} с и попробуйте снова.`);
         } else {
-          renderError("Something went wrong", (data.error && data.error.message) || "Unexpected error.");
+          renderError("Что-то пошло не так", (data.error && data.error.message) || "Непредвиденная ошибка.");
         }
       } catch {
-        renderError("Network error", "Could not reach the server. Is it running?");
+        renderError("Ошибка сети", "Не удалось связаться с сервером. Он запущен?");
       } finally {
         btn.disabled = false;
-        btn.textContent = "Send message";
+        btn.textContent = "Отправить";
       }
     });
   </script>

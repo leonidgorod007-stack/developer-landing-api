@@ -94,7 +94,7 @@ class EmailDeliveryStatus(BaseModel):
 class ContactResponse(BaseModel):
     success: bool = True
     id: str
-    message: str = "Thank you! Your message has been received."
+    message: str = "Спасибо! Ваше сообщение получено."
     analysis: AIAnalysis
     email: EmailDeliveryStatus
 

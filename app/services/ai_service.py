@@ -54,8 +54,24 @@ _SYSTEM_PROMPT = (
     "category and priority, summarise it in one sentence, and draft a short, "
     "warm, professional reply the developer can send back. Treat obvious spam "
     "or marketing solicitations as category 'spam' with low priority. Never "
-    "invent facts about the developer; keep the reply generic and courteous."
+    "invent facts about the developer; keep the reply generic and courteous. "
+    "Write the summary and the reply in Russian, unless the incoming message "
+    "is clearly in another language — in that case use the message's language."
 )
+
+_SENTIMENT_RU = {
+    Sentiment.positive: "позитивное",
+    Sentiment.neutral: "нейтральное",
+    Sentiment.negative: "негативное",
+}
+_CATEGORY_RU = {
+    RequestCategory.support: "поддержка",
+    RequestCategory.sales: "продажи",
+    RequestCategory.hiring: "найм",
+    RequestCategory.feedback: "отзыв",
+    RequestCategory.spam: "спам",
+    RequestCategory.other: "другое",
+}
 
 
 class AIService:
@@ -173,12 +189,12 @@ class AIService:
             category=category,
             priority=priority,
             summary=(
-                f"{submission.name} sent a {sentiment.value} message "
-                f"categorised as {category.value}."
+                f"Получено {_SENTIMENT_RU[sentiment]} обращение от "
+                f"{submission.name}, категория «{_CATEGORY_RU[category]}»."
             ),
             suggested_reply=(
-                f"Hi {submission.name.split()[0]}, thank you for reaching out — "
-                "I've received your message and will get back to you shortly."
+                f"Здравствуйте, {submission.name.split()[0]}! Спасибо за "
+                "обращение — я его получил и свяжусь с вами в ближайшее время."
             ),
             ai_available=False,
             model=None,

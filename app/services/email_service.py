@@ -69,23 +69,23 @@ class EmailService:
         msg["To"] = self._s.owner_email
         msg["Reply-To"] = sub.email
         msg["Subject"] = (
-            f"[{analysis.priority.value.upper()}] New {analysis.category.value} "
-            f"message from {sub.name}"
+            f"[{analysis.priority.value.upper()}] Новое обращение "
+            f"({analysis.category.value}) от {sub.name}"
         )
         msg.set_content(
-            f"New contact submission (id: {sid})\n"
+            f"Новое обращение с формы (id: {sid})\n"
             f"{'=' * 48}\n"
-            f"Name    : {sub.name}\n"
-            f"Email   : {sub.email}\n"
-            f"Phone   : {sub.phone or 'n/a'}\n\n"
-            f"Message :\n{sub.comment}\n\n"
+            f"Имя       : {sub.name}\n"
+            f"Email     : {sub.email}\n"
+            f"Телефон   : {sub.phone or '—'}\n\n"
+            f"Сообщение :\n{sub.comment}\n\n"
             f"{'-' * 48}\n"
-            f"AI triage ({'live' if analysis.ai_available else 'fallback'})\n"
-            f"  Sentiment : {analysis.sentiment.value}\n"
-            f"  Category  : {analysis.category.value}\n"
-            f"  Priority  : {analysis.priority.value}\n"
-            f"  Summary   : {analysis.summary}\n\n"
-            f"Suggested reply:\n{analysis.suggested_reply}\n"
+            f"AI-разбор ({'рабочий' if analysis.ai_available else 'запасной'})\n"
+            f"  Тональность : {analysis.sentiment.value}\n"
+            f"  Категория   : {analysis.category.value}\n"
+            f"  Приоритет   : {analysis.priority.value}\n"
+            f"  Резюме      : {analysis.summary}\n\n"
+            f"Черновик ответа:\n{analysis.suggested_reply}\n"
         )
         return msg
 
@@ -96,14 +96,13 @@ class EmailService:
         msg = EmailMessage()
         msg["From"] = self._from()
         msg["To"] = sub.email
-        msg["Subject"] = "Thanks for reaching out!"
+        msg["Subject"] = "Спасибо за обращение!"
         msg.set_content(
-            f"Hi {first_name},\n\n"
-            "Thanks for getting in touch — this is an automated confirmation "
-            "that your message has been received. Here's a copy for your "
-            "records:\n\n"
+            f"Здравствуйте, {first_name}!\n\n"
+            "Спасибо, что написали — это автоматическое подтверждение, что ваше "
+            "сообщение получено. Копия для вас:\n\n"
             f"{sub.comment}\n\n"
-            "I'll get back to you as soon as I can.\n\n"
-            f"Best regards,\n{self._s.smtp_from_name}\n"
+            "Я свяжусь с вами в ближайшее время.\n\n"
+            f"С уважением,\n{self._s.smtp_from_name}\n"
         )
         return msg
