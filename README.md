@@ -2,10 +2,7 @@
 
 🇷🇺 **Русский** · 🇬🇧 [English version ↓](#english-version)
 
-Бэкенд-сервис для лендинг-презентации разработчика: форма обратной связи с
-валидацией, **AI-триажом каждого сообщения**, email-уведомлениями (владельцу +
-копия пользователю), rate limiting, структурированным логированием в файл и
-метриками обращений — на чистой слоистой архитектуре.
+Бэкенд-сервис для лендинг-презентации разработчика: форма обратной связи с валидацией, **AI-триажом каждого сообщения**, email-уведомлениями (владельцу + копия пользователю), rate limiting, структурированным логированием в файл и метриками обращений — на чистой слоистой архитектуре.
 
 > Полный цикл запроса, ровно как в ТЗ:
 > **запрос → валидация → бизнес-логика → AI → email → ответ.**
@@ -32,6 +29,11 @@
 ---
 
 ## 1. Быстрый старт
+
+**Проще всего (Windows):** двойной клик по **`start.bat`** — он сам создаст
+виртуальное окружение, поставит зависимости (при необходимости через прокси —
+переменная `PIP_PROXY`), создаст `.env` из шаблона и запустит сервер, открыв
+браузер. Работает из любой папки. Ручной способ / другие ОС — ниже.
 
 Требуется **Python 3.9+** (разрабатывалось и тестировалось на 3.11).
 
@@ -191,7 +193,7 @@ Swagger/OpenAPI — всё это прямые требования ТЗ.
 ├── tests/test_api.py           # End-to-end тесты (герметичные: fallback AI, console email)
 ├── data/                       # Рантайм: логи, метрики, rate-limit (в .gitignore)
 ├── requirements.txt · Dockerfile · docker-compose.yml
-├── postman_collection.json · .env.example · README.md
+├── start.bat · postman_collection.json · .env.example · README.md
 ```
 
 ### Использованные паттерны
@@ -518,6 +520,11 @@ built on a clean layered architecture.
 
 ## 1. Quick start
 
+**Easiest (Windows):** double-click **`start.bat`** — it creates the virtual
+environment, installs dependencies (optionally via a proxy — set `PIP_PROXY`),
+creates `.env` from the template, and starts the server, opening your browser.
+Runs from any folder. Manual / other-OS steps below.
+
 Requires **Python 3.9+** (developed and tested on 3.11).
 
 ```bash
@@ -676,7 +683,7 @@ so responsibilities are isolated and everything is independently testable.
 ├── tests/test_api.py           # End-to-end tests (hermetic: fallback AI, console email)
 ├── data/                       # Runtime: logs, metrics, rate-limit (git-ignored)
 ├── requirements.txt · Dockerfile · docker-compose.yml
-├── postman_collection.json · .env.example · README.md
+├── start.bat · postman_collection.json · .env.example · README.md
 ```
 
 ### Design patterns used
