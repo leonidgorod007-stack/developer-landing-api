@@ -389,6 +389,14 @@ Fallback — классификатор по ключевым словам (то
 - Первые версии fallback-классификатора и HTML/CSS лендинга.
 - Черновики докстрингов и этого README.
 
+**Промпты, которые использовали (примеры):**
+- «Спроектируй бэкенд формы обратной связи на FastAPI со слоистой архитектурой (контроллеры → сервисы → репозитории): `POST /api/contact` с валидацией имени/телефона/email/комментария».
+- «Добавь AI-триаж сообщения через Anthropic — тональность, категория, приоритет, резюме и черновик ответа — с graceful fallback, если AI недоступен».
+- «Сделай файловый rate limiter со скользящим окном по IP, логирование всех запросов в файл, эндпоинты health и metrics».
+- «Отправляй два письма: владельцу и копию пользователю; при недоступном SMTP — console-режим».
+- «Напиши end-to-end тесты через FastAPI TestClient: успех, валидация, rate-limit, health, метрики».
+- «Сделай весь сайт и пользовательские тексты на русском».
+
 **Проверено и исправлено вручную:**
 - **Корректность AI SDK** — в первой версии использовался новейший API
   структурированного вывода `output_config`; при проверке оказалось, что
@@ -880,6 +888,19 @@ This project was built with **Claude (Claude Code)** as a pair-programmer.
 - First drafts of the fallback keyword classifier and the HTML/CSS of the
   landing page.
 - Draft docstrings and this README.
+
+**Prompts used (examples):**
+- "Design a FastAPI contact-form backend with a layered architecture
+  (controllers → services → repositories): `POST /api/contact` validating
+  name/phone/email/comment."
+- "Add AI triage of the message via Anthropic — sentiment, category, priority,
+  summary, and a draft reply — with a graceful fallback when AI is unavailable."
+- "Add a file-based per-IP sliding-window rate limiter, request logging to a
+  file, and health + metrics endpoints."
+- "Send two emails — owner notification and a copy to the user; console mode
+  when SMTP isn't configured."
+- "Write end-to-end tests via FastAPI TestClient: happy path, validation,
+  rate-limit, health, metrics."
 
 **Reviewed and fixed by hand:**
 - **AI SDK correctness** — the first draft used the newest `output_config`
