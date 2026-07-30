@@ -85,15 +85,32 @@ class AIService:
                 client_kwargs = {"api_key": settings.anthropic_api_key}
                 if settings.anthropic_base_url:
                     client_kwargs["base_url"] = settings.anthropic_base_url
+                http_client = self._build_http_client(settings.anthropic_proxy)
+                if http_client is not None:
+                    client_kwargs["http_client"] = http_client
                 self._client = AsyncAnthropic(**client_kwargs)
                 logger.info(
-                    "AI service ready (model=%s, base_url=%s)",
-                    settings.ai_model, settings.anthropic_base_url or "default",
+                    "AI service ready (model=%s, base_url=%s, proxy=%s)",
+                    settings.ai_model,
+                    settings.anthropic_base_url or "default",
+                    settings.anthropic_proxy or "direct",
                 )
             except Exception as exc:
                 logger.error("Failed to init Anthropic client, using fallback: %s", exc)
         else:
             logger.warning("AI not configured — analysis will use rule-based fallback.")
+
+    @staticmethod
+    def _build_http_client(proxy: str):
+        import httpx
+
+        mode = (proxy or "").strip()
+        timeout = httpx.Timeout(60.0, connect=15.0)
+        if mode == "":
+            return httpx.AsyncClient(trust_env=False, timeout=timeout)
+        if mode.lower() in ("system", "env"):
+            return None
+        return httpx.AsyncClient(proxy=mode, trust_env=False, timeout=timeout)
 
     @property
     def available(self) -> bool:

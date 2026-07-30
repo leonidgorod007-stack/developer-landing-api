@@ -92,6 +92,7 @@ docker compose up --build
 | `RATE_LIMIT_WINDOW_SECONDS` | `60` | Длина окна rate limit |
 | `ANTHROPIC_API_KEY` | _(пусто)_ | Включает живой AI; пусто → fallback |
 | `ANTHROPIC_BASE_URL` | _(пусто)_ | Опциональный URL прокси/шлюза; пусто → `api.anthropic.com` |
+| `ANTHROPIC_PROXY` | _(пусто)_ | Прокси для AI-запросов: пусто = напрямую, в обход системного (работает при включённом VPN/прокси); `system` = системный; или URL |
 | `AI_MODEL` | `claude-sonnet-5` | Модель для триажа |
 | `AI_TIMEOUT_SECONDS` | `12` | Жёсткий таймаут до перехода на fallback |
 | `SMTP_HOST` … `SMTP_PASSWORD` | _(пусто)_ | SMTP-доступы; пусто → console-режим |
@@ -582,6 +583,7 @@ See [`.env.example`](.env.example) for the full list.
 | `RATE_LIMIT_WINDOW_SECONDS` | `60` | Rate-limit window length |
 | `ANTHROPIC_API_KEY` | _(empty)_ | Enables live AI; empty → fallback |
 | `ANTHROPIC_BASE_URL` | _(empty)_ | Optional proxy/gateway URL; empty → `api.anthropic.com` |
+| `ANTHROPIC_PROXY` | _(empty)_ | Proxy for AI calls: empty = direct, ignoring the system proxy (works with a VPN/proxy on); `system` = OS proxy; or a URL |
 | `AI_MODEL` | `claude-sonnet-5` | Model used for triage |
 | `AI_TIMEOUT_SECONDS` | `12` | Hard timeout before falling back |
 | `SMTP_HOST` … `SMTP_PASSWORD` | _(empty)_ | SMTP creds; empty → console mode |

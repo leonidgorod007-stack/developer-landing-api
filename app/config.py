@@ -37,6 +37,11 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
     anthropic_base_url: str = ""
+    # How outbound AI calls handle proxies:
+    #   ""            -> direct connection, ignore system proxy env (works with VPN/proxy on)
+    #   "system"/"env"-> use the OS/system proxy settings
+    #   "http://host:port" -> use this proxy explicitly
+    anthropic_proxy: str = ""
     ai_model: str = "claude-sonnet-5"
     ai_timeout_seconds: float = 12.0
     ai_enabled: bool = True
