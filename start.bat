@@ -87,7 +87,9 @@ echo.
 REM --- open the browser a few seconds after start -------------
 start "" /b powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 3; Start-Process 'http://localhost:8000/'" >nul 2>&1
 
-REM --- run the server -----------------------------------------
+REM --- run the server (local bind, no reload) -----------------
+set "HOST=127.0.0.1"
+set "RELOAD=false"
 "%VENV_PY%" run.py
 
 echo.
